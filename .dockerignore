@@ -1,0 +1,11 @@
+.git
+.github
+.gitignore
+.idea
+.vscode
+*.md
+*.exe
+hostinfo
+hostinfo.exe
+dist/
+tmp/

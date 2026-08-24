@@ -41,6 +41,25 @@ go build -o hostinfo .
 ./hostinfo
 ```
 
+### 使用 Docker
+
+镜像发布在 [GHCR](https://github.com/vevc/hostinfo/pkgs/container/hostinfo)，支持 `linux/amd64` 与 `linux/arm64`：
+
+```bash
+docker pull ghcr.io/vevc/hostinfo:latest
+docker run --rm -p 8080:8080 ghcr.io/vevc/hostinfo:latest
+
+# 指定版本
+docker run --rm -p 8080:8080 ghcr.io/vevc/hostinfo:v0.1.0
+```
+
+本地构建：
+
+```bash
+docker build -t hostinfo .
+docker run --rm -p 8080:8080 hostinfo
+```
+
 服务默认监听 `:8080`。
 
 ## 配置
@@ -115,7 +134,12 @@ curl http://127.0.0.1:8080/api/env/PATH
 3. 如需预发布版本，勾选 **prerelease**
 4. 点击 **Run workflow**
 
-Workflow 会基于当前选中的 commit 构建二进制、生成 `checksums.txt`，并创建对应 tag 的 GitHub Release。
+Workflow 会基于当前选中的 commit：
+
+1. 交叉编译二进制并创建 GitHub Release（含 `checksums.txt`）
+2. 构建并推送多架构 Docker 镜像到 GHCR
+
+**二进制文件**
 
 | 平台 | 文件名 |
 |------|--------|
@@ -125,18 +149,29 @@ Workflow 会基于当前选中的 commit 构建二进制、生成 `checksums.txt
 | macOS arm64 | `hostinfo-darwin-arm64` |
 | Windows amd64 | `hostinfo-windows-amd64.exe` |
 
-同时附带 `checksums.txt`（SHA256 校验和）。
+**Docker 镜像**（`ghcr.io/vevc/hostinfo`）
+
+| 标签 | 说明 |
+|------|------|
+| `v0.1.0` 等 | 与发版 tag 一致 |
+| `latest` | 仅正式版（非 prerelease）会更新 |
+
+平台：`linux/amd64`、`linux/arm64`。
+
+若镜像默认为私有，可在 GitHub **Packages** 中将该 package 设为 Public。
 
 ## 项目结构
 
 ```
 .
 ├── main.go                  # 入口与路由
+├── Dockerfile               # 多阶段构建镜像
 ├── internal/
 │   ├── api/                 # HTTP handlers
 │   └── sysinfo/             # 信息采集逻辑
 └── .github/workflows/
-    └── release.yml          # Release 构建与发布
+    ├── ci.yml               # 构建与测试
+    └── release.yml          # Release 与 GHCR 镜像发布
 ```
 
 ## 依赖
